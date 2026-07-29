@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "medical-chatbot"
+version = "0.1.0"
+description = "Production-grade medical RAG ingestion pipeline"
+requires-python = ">=3.11"
+
+dependencies = [
+    # XML parsing — 5-10x faster than stdlib ElementTree; enables iterparse streaming
+    "lxml>=5.2",
+
+    # Unicode / encoding normalisation — fixes mojibake, HTML entities, whitespace
+    "ftfy>=6.2",
+
+    # Token-aware chunking with sliding overlap — Rust-backed, HuggingFace tokenizer integration
+    "semantic-text-splitter>=0.16",
+
+    # HuggingFace fast tokenizers — exact token counts per chunk; must match embedding model
+    "tokenizers>=0.19",
+
+    # Fast JSON serialisation/deserialisation — 3-10x faster than stdlib json; UTF-8 native
+    "orjson>=3.10",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["preprocessing*"]

@@ -1,0 +1,13 @@
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+.git
+.gitignore
+.streamlit/secrets.toml
+tests
+.coverage
+htmlcov
+.pytest_cache
