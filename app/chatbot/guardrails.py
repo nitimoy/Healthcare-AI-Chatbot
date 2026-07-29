@@ -124,6 +124,17 @@ _UNSAFE_REQUEST_PATTERNS: list[str] = [
     r"\bcan\s+i\s+take\s+(ibuprofen|aspirin|paracetamol|tylenol|advil|naproxen|steroids?)\s+(with|and|while\s+on)\s+(blood\s+pressure|bp|hypertension|diabetes|anticoagulant|blood\s+thinner|medication|medicine)\b",
 ]
 
+# Patterns for pure greetings, identity/capability questions, and polite closings
+_GREETING_PATTERNS: list[str] = [
+    r"^\s*(hi|hello|hey|greetings|good\s+(morning|afternoon|evening)|hi\s+there|hello\s+there|howdy|hey\s+there)\b[\s!.,?]*$",
+    r"^\s*(who\s+are\s+you|what\s+are\s+you|what\s+is\s+your\s+name|what\s+can\s+you\s+do|how\s+can\s+you\s+help(\s+me)?|what\s+do\s+you\s+do|tell\s+me\s+about\s+yourself|help|capabilities)\b[\s!.,?]*$",
+    r"^\s*(how\s+are\s+you|how\s+are\s+you\s+doing)\b[\s!.,?]*$",
+]
+
+_GRATITUDE_PATTERNS: list[str] = [
+    r"^\s*(thanks|thank\s+you|thankyou|thanks\s+a\s+lot|thank\s+you\s+so\s+much|bye|goodbye|have\s+a\s+nice\s+day|great\s+thanks)\b[\s!.,?]*$",
+]
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Pre-compiled regex (compile once at module load for speed)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -132,6 +143,8 @@ _EMERGENCY_RE = re.compile("|".join(_EMERGENCY_PATTERNS), flags=re.IGNORECASE)
 _MEDICATION_MOD_RE = re.compile("|".join(_MEDICATION_MOD_PATTERNS), flags=re.IGNORECASE)
 _PREDICTION_RE = re.compile("|".join(_PREDICTION_PATTERNS), flags=re.IGNORECASE)
 _UNSAFE_RE = re.compile("|".join(_UNSAFE_REQUEST_PATTERNS), flags=re.IGNORECASE)
+_GREETING_RE = re.compile("|".join(_GREETING_PATTERNS), flags=re.IGNORECASE)
+_GRATITUDE_RE = re.compile("|".join(_GRATITUDE_PATTERNS), flags=re.IGNORECASE)
 
 _DIET_RE = re.compile(
     r"\b(diet|keto|ketogenic|fasting|intermittent\s+fasting|meal\s+plan|weight\s+loss|dash|mediterranean|vegan|low[- ]carb)\b",
@@ -142,6 +155,7 @@ _CONDITION_RE = re.compile(
     r"\b(diabetes|diabetic|kidney|renal|hypertension|high\s+blood\s+pressure|heart\s+disease|cholesterol|cancer|pregnancy|pregnant|breastfeeding|child|children|infant|infants)\b",
     flags=re.IGNORECASE,
 )
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Pre-written safety responses (no LLM call — deterministic)
@@ -235,6 +249,32 @@ I can, however, provide **general educational information** on the principles of
 ⚠️ *This chatbot provides educational healthcare information only and should not replace professional medical advice.*
 """
 
+_GREETING_RESPONSE = """\
+Hello! 👋 I am your **Healthcare AI Assistant**, powered by evidence-grounded medical knowledge from MedlinePlus (U.S. National Library of Medicine).
+
+I can help answer general healthcare questions regarding:
+- 🩺 **Common Symptoms** (e.g., early signs of diabetes, asthma triggers)
+- 🫀 **General Diseases & Conditions** (e.g., hypertension, heart health)
+- 🥗 **Nutrition & Diet** (e.g., heart-healthy foods, balanced nutrition)
+- 🏃 **Healthy Lifestyle Suggestions** (e.g., exercise, wellness habits)
+- 🛡️ **Preventive Healthcare** (e.g., health screenings, immunity tips)
+- 🩹 **First-Aid Guidance** (e.g., treating minor burns, heat illness)
+
+How can I help you with a health topic today?
+
+---
+⚠️ *Medical Disclaimer: General health education only. Does not replace professional medical advice, diagnosis, or prescription.*
+"""
+
+_GRATITUDE_RESPONSE = """\
+You're very welcome! 😊
+
+If you have any other general healthcare questions, feel free to ask anytime. Stay healthy!
+
+---
+⚠️ *Medical Disclaimer: General health education only. Does not replace professional medical advice.*
+"""
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
@@ -246,6 +286,22 @@ def is_emergency(query: str) -> bool:
     matched = bool(_EMERGENCY_RE.search(query))
     if matched:
         logger.warning("GUARDRAIL [EMERGENCY] triggered for query: %r", query[:100])
+    return matched
+
+
+def is_greeting_request(query: str) -> bool:
+    """Return True if query is a pure greeting or assistant capability question."""
+    matched = bool(_GREETING_RE.search(query))
+    if matched:
+        logger.info("Conversational intent [GREETING] triggered for query: %r", query[:100])
+    return matched
+
+
+def is_gratitude_request(query: str) -> bool:
+    """Return True if query is a polite closing or thank-you message."""
+    matched = bool(_GRATITUDE_RE.search(query))
+    if matched:
+        logger.info("Conversational intent [GRATITUDE] triggered for query: %r", query[:100])
     return matched
 
 
@@ -284,9 +340,13 @@ def is_multi_condition_diet_request(query: str) -> bool:
 
 
 def check_and_respond(query: str) -> str | None:
-    """Run all guardrail checks and return a safety response if triggered."""
+    """Run all guardrail and conversational intent checks, returning a response if matched."""
     if is_emergency(query):
         return _EMERGENCY_RESPONSE
+    if is_greeting_request(query):
+        return _GREETING_RESPONSE
+    if is_gratitude_request(query):
+        return _GRATITUDE_RESPONSE
     if is_medication_mod_request(query):
         return _MEDICATION_MOD_RESPONSE
     if is_prediction_request(query):
@@ -296,3 +356,4 @@ def check_and_respond(query: str) -> str | None:
     if is_unsafe_request(query):
         return _UNSAFE_REQUEST_RESPONSE
     return None
+

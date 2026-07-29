@@ -27,6 +27,8 @@ from tests.test_evaluator import (
     test_guardrail_treatment_substitution_refusal,
     test_guardrail_drug_interaction_refusal,
     test_guardrail_negative_regression_general_questions,
+    test_conversational_greetings,
+    test_conversational_gratitude,
 )
 
 def run():
@@ -67,6 +69,11 @@ def run():
     print("  ✅ Personal Drug Interaction Refusal PASSED")
     test_guardrail_negative_regression_general_questions()
     print("  ✅ Negative Regression (General Educational Questions Allowed) PASSED")
+    test_conversational_greetings()
+    print("  ✅ Conversational Greetings & Capabilities PASSED")
+    test_conversational_gratitude()
+    print("  ✅ Conversational Gratitude & Closing PASSED")
+
 
     print("\n🎤 Running Voice Sanitizer & Session Model Test Suite...")
     from tests.test_voice import (

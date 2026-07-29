@@ -199,3 +199,22 @@ def test_guardrail_negative_regression_general_questions():
     assert check_and_respond("Is paracetamol safer than ibuprofen for most adults?") is None
     assert check_and_respond("Why can NSAIDs interact with blood pressure medicines?") is None
 
+
+def test_conversational_greetings():
+    """Verify that pure greetings and capability queries return welcoming assistant introductions."""
+    from app.chatbot.guardrails import check_and_respond
+    for query in ["Hello", "Hi", "Hey", "Good morning", "who are you", "what can you do"]:
+        resp = check_and_respond(query)
+        assert resp is not None, f"Expected greeting response for query '{query}'"
+        assert "Healthcare AI Assistant" in resp, f"Expected assistant identity in response for query '{query}'"
+
+
+def test_conversational_gratitude():
+    """Verify that polite closing and thank-you messages return warm closing responses."""
+    from app.chatbot.guardrails import check_and_respond
+    for query in ["Thank you", "Thanks", "Thanks a lot", "bye", "goodbye"]:
+        resp = check_and_respond(query)
+        assert resp is not None, f"Expected gratitude response for query '{query}'"
+        assert "welcome" in resp.lower() or "stay healthy" in resp.lower(), f"Expected closing response for query '{query}'"
+
+

@@ -545,16 +545,6 @@ if not st.session_state.messages:
                 st.rerun()
     st.divider()
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Warm-up: pre-load BGE-M3 + ChromaDB on first visit (no question needed yet)
-# ─────────────────────────────────────────────────────────────────────────────
-# On first page load, generator is None. We warm up the cache here so that
-# the spinner shows inside the main content area (not blocking the sidebar or
-# header). After the load completes we rerun so the page renders in full.
-if st.session_state.generator is None and not st.session_state.get("pending_q"):
-    with st.spinner("🔄 Loading medical knowledge base & embedding model (first load only)…"):
-        get_generator()   # triggers _get_cached_retriever() and caches generator
-    st.rerun()            # re-render page cleanly now that model is ready
 
 
 
@@ -718,17 +708,18 @@ if question:
 
     with st.chat_message("assistant", avatar="🏥"):
         try:
-            gen = get_generator()
             with st.spinner("🧠 Searching MedlinePlus knowledge base & generating answer..."):
+                gen = get_generator()
                 chunks, token_stream = gen.stream_response(
                     question=question,
                     k=st.session_state.top_k,
                 )
-                full_response = st.write_stream(token_stream)
+            full_response = st.write_stream(token_stream)
             render_sources(chunks)
             st.session_state.messages.append(
                 {"role": "assistant", "content": full_response, "sources": chunks}
             )
+
         except Exception as exc:
             import traceback
             err_msg = f"❌ **An error occurred during generation:**\n\n```\n{exc}\n```"
